@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Description>.NET Interfaces for calling DirectShow.  See http://directshownet.sourceforge.net/</Description>
+    <AssemblyVersion>2.1.0.0</AssemblyVersion>
+    <FileVersion>2.1.0.0</FileVersion>
+    <Copyright>GNU Lesser General Public License v2.1</Copyright>
+    <PackageLicenseUrl>https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html</PackageLicenseUrl>
+    <PackageProjectUrl>http://directshownet.sourceforge.net/</PackageProjectUrl>
+  </PropertyGroup>
+
+</Project>
