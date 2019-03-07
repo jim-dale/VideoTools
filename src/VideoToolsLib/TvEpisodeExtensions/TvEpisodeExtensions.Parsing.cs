@@ -15,10 +15,13 @@ namespace VideoTools
                 var showName = match.Groups[1].Value.Trim();
 
                 result.ShowName = showName;
-                result.Title = showName;
 
                 string broadcastStr = match.Groups[2].Value.Trim();
-                if (DateTime.TryParseExact(broadcastStr, "yyyy-MM-dd HH-mm", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out DateTime broadcastDate))
+                if (DateTime.TryParseExact(broadcastStr, "yyyy-MM-dd HH-mm", CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out DateTime broadcastDate))
+                {
+                    result.AiredTime = broadcastDate;
+                }
+                else if (DateTime.TryParseExact(broadcastStr, "yyyy-MM-dd-HH-mm", CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out broadcastDate))
                 {
                     result.AiredTime = broadcastDate;
                 }
@@ -29,38 +32,47 @@ namespace VideoTools
 
         public static void TrySetEpisodeName(this TvEpisode item, string s)
         {
-            var match = Regex.Match(s, @"^(.+):(.*)$");
-            if (match.Success && match.Groups.Count == 3)
+            if (String.IsNullOrEmpty(s) == false)
             {
-                var episodeTitle = match.Groups[1].Value.Trim();
-                var plot = match.Groups[2].Value.Trim();
+                var match = Regex.Match(s, @"^(.+):(.*)$");
+                if (match.Success && match.Groups.Count == 3)
+                {
+                    var episodeTitle = match.Groups[1].Value.Trim();
+                    var plot = match.Groups[2].Value.Trim();
 
-                item.Title = episodeTitle;
+                    item.Title = episodeTitle;
+                }
             }
         }
 
         public static void TrySetEpisodeNumber(this TvEpisode item, string s)
         {
-            var match = Regex.Match(s, Helpers.EpisodeNumberPatternBBC);
-            if (match.Success && match.Groups.Count == 2)
+            if (String.IsNullOrEmpty(s) == false)
             {
-                if (int.TryParse(match.Groups[1].Value, out int episodeNumber))
+                var match = Regex.Match(s, Helpers.EpisodeNumberPatternBBC);
+                if (match.Success && match.Groups.Count == 2)
                 {
-                    item.EpisodeNumber = episodeNumber;
+                    if (int.TryParse(match.Groups[1].Value, out int episodeNumber))
+                    {
+                        item.EpisodeNumber = episodeNumber;
+                    }
                 }
             }
         }
 
         public static void TrySetSeriesAndEpisodeNumbers(this TvEpisode item, string s)
         {
-            var match = Regex.Match(s, @"S(\d+) Ep(\d+)(?:/(?:\d+))?");
-            if (match.Success && match.Groups.Count == 3)
+            if (String.IsNullOrEmpty(s) == false)
             {
-                if (int.TryParse(match.Groups[1].Value, out int seriesNumber)
-                    && int.TryParse(match.Groups[2].Value, out int episodeNumber))
+                var match = Regex.Match(s, @"S(\d+) Ep(\d+)(?:/(?:\d+))?");
+                if (match.Success && match.Groups.Count == 3)
                 {
-                    item.SeasonNumber = seriesNumber;
-                    item.EpisodeNumber = episodeNumber;
+                    if (int.TryParse(match.Groups[1].Value, out int seriesNumber)
+                        && int.TryParse(match.Groups[2].Value, out int episodeNumber))
+                    {
+                        item.SeasonNumber = seriesNumber;
+                        item.EpisodeNumber = episodeNumber;
+                    }
                 }
             }
         }

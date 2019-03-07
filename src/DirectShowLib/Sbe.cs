@@ -184,6 +184,14 @@ namespace DirectShowLib.SBE
         public const string NSCPhone = "NSC_Phone";
         public const string NSCEmail = "NSC_Email";
         public const string NSCDescription = "NSC_Description";
+
+        // Additions
+        public const string Subtitle = "WM/SubTitle";
+        public const string SubtitleDescription = "WM/SubTitleDescription";
+        public const string EncodeTime = "WM/WMRVEncodeTime";
+        public const string BroadcastDateTime = "WM/MediaOriginalBroadcastDateTime";
+        public const string StationCallSign = "WM/MediaStationCallSign";
+        public const string MediaCredits = "WM/MediaCredits";
     }
 
     /// <summary>

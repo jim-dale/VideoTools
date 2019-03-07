@@ -52,14 +52,14 @@ namespace VideoTools
             item.Run(args);
         }
 
-        public static void SetMp4FileMetadata(this ConsoleClient item, TvEpisode episode, string source, string thumb, string target)
+        public static void SetMp4FileMetadata(this ConsoleClient item, TvEpisode episode, string source, string target)
         {
             const int MaxDescriptionLength = 255;
 
             var description = episode.Description.Truncate(MaxDescriptionLength, trimSpaces: true);
             var seasonNumArg = (episode.SeasonNumber == Helpers.InvalidSeasonNumber) ? String.Empty : $"--TVSeasonNum {episode.SeasonNumber}";
             var episodeNumArg = (episode.EpisodeNumber == Helpers.InvalidEpisodeNumber) ? String.Empty : $"--TVEpisodeNum {episode.EpisodeNumber}";
-            var artworkArg = (thumb == null) ? String.Empty : $"--artwork \"{thumb}\"";
+            var artworkArg = (episode.ThumbnailFile == null) ? String.Empty : $"--artwork \"{episode.ThumbnailFile}\"";
             var aired = episode.AiredTime.ToString(Helpers.UtcDateTimeFormat);
 
             var args = new string[]

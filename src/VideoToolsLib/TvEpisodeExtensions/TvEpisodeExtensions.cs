@@ -10,6 +10,12 @@ namespace VideoTools
             const string Prefix = "New_";
             const string Replacement = "New:";
 
+            // Order is important - don't change
+            if (String.IsNullOrEmpty(result.Title))
+            {
+                string aired = result.AiredTime.ToString("yyyy-MM-dd HH:mm");
+                result.Title = $"{result.ShowName} {aired}";
+            }
             if (string.IsNullOrEmpty(result.ShowName) == false)
             {
                 result.ShowName = result.ShowName.RemoveOptionalPrefix(Prefix).Trim();

@@ -6,12 +6,10 @@ namespace VideoTools
 
     public static partial class Helpers
     {
-        public static bool IsFileNameKodiCompatible(string path)
+        public static bool IsFileNameKodiCompatible(string fileName)
         {
-            string fileName = Path.GetFileNameWithoutExtension(path);
-
-            var match = Regex.Match(fileName, @"^(.+)\s+s\d+e\d+", RegexOptions.IgnoreCase);
-            bool result = (match.Success && match.Groups.Count == 2);
+            var match = Regex.Match(fileName, @"^.+\s+s\d+e\d+", RegexOptions.IgnoreCase);
+            bool result = (match.Success && match.Groups.Count == 1);
 
             return result;
         }

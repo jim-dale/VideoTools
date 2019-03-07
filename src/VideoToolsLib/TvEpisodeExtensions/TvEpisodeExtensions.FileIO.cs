@@ -2,11 +2,12 @@
 namespace VideoTools
 {
     using System;
+    using System.IO;
     using System.Xml.Linq;
 
     public static partial class TvEpisodeExtensions
     {
-        public static string GetOutputFileName(this TvEpisode item)
+        public static string GetConversionOutputFileName(this TvEpisode item)
         {
             var result = default(string);
 
@@ -48,7 +49,8 @@ namespace VideoTools
 
             if (String.IsNullOrWhiteSpace(item.ThumbnailFile) == false)
             {
-                episode.Add(new XElement("thumb", item.ThumbnailFile));
+                var thumb = Path.GetFileName(item.ThumbnailFile);
+                episode.Add(new XElement("thumb", thumb));
             }
 
             var xml = new XDocument(

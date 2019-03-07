@@ -4,19 +4,19 @@ namespace WtvConverter
     using System;
     using System.Collections.Specialized;
     using System.IO;
-    using System.Linq;
     using VideoTools;
 
     public class AppContext
     {
-        public string FfmpegPath { get; set; }
-        public string FfprobePath { get; set; }
-        public string AtomicParsleyPath { get; set; }
-        public string SourcePath { get; set; }
+        public string Ffmpeg { get; set; }
+        public string Ffprobe { get; set; }
+        public string AtomicParsley { get; set; }
+        public string InputDirectory { get; set; }
         public string IntermediateDirectory { get; set; }
         public string TargetDirectory { get; set; }
         public string SearchPatterns { get; set; }
         public bool DeleteIntermediateFile { get; set; }
+        public bool WhatIf { get; set; }
 
         public ConsoleClient FfmpegCommand { get; private set; }
         public ConsoleClient FfprobeCommand { get; private set; }
@@ -32,55 +32,35 @@ namespace WtvConverter
 
         public AppContext SetFromConfiguration(NameValueCollection settings)
         {
-            AtomicParsleyPath = GetSetting(settings, AtomicParsleyPath, nameof(AtomicParsleyPath));
-            FfmpegPath = GetSetting(settings, FfmpegPath, nameof(FfmpegPath));
-            FfprobePath = GetSetting(settings, FfprobePath, nameof(FfprobePath));
+            AtomicParsley = settings.GetAs(AtomicParsley, nameof(AtomicParsley));
+            Ffmpeg = settings.GetAs(Ffmpeg, nameof(Ffmpeg));
+            Ffprobe = settings.GetAs(Ffprobe, nameof(Ffprobe));
 
-            SourcePath = GetSetting(settings, SourcePath, nameof(SourcePath));
-            IntermediateDirectory = GetSetting(settings, IntermediateDirectory, nameof(IntermediateDirectory));
-            TargetDirectory = GetSetting(settings, TargetDirectory, nameof(TargetDirectory));
+            InputDirectory = settings.GetAs(InputDirectory, nameof(InputDirectory));
+            IntermediateDirectory = settings.GetAs(IntermediateDirectory, nameof(IntermediateDirectory));
+            TargetDirectory = settings.GetAs(TargetDirectory, nameof(TargetDirectory));
 
-            SearchPatterns = GetSetting(settings, SearchPatterns, nameof(SearchPatterns));
+            SearchPatterns = settings.GetAs(SearchPatterns, nameof(SearchPatterns));
 
-            DeleteIntermediateFile = GetSetting(settings, DeleteIntermediateFile, nameof(DeleteIntermediateFile));
+            DeleteIntermediateFile = settings.GetAs(DeleteIntermediateFile, nameof(DeleteIntermediateFile));
+
+            WhatIf = settings.GetAs(WhatIf, nameof(WhatIf));
 
             return this;
         }
 
-        public void Initialise()
-        {
-            FfmpegCommand = new ConsoleClient(FfmpegPath);
-            FfprobeCommand = new ConsoleClient(FfprobePath);
-            AtomicParsleyCommand = new ConsoleClient(AtomicParsleyPath);
-        }
-
-        private T GetSetting<T>(NameValueCollection settings, T defaultValue, string propertyName)
-        {
-            T result = defaultValue;
-
-            string[] values = settings.GetValues(propertyName);
-            if (values != null && values.Length > 0)
-            {
-                if (typeof(T).IsArray)
-                {
-                    result = (T)Convert.ChangeType(values, typeof(T));
-                }
-                else
-                {
-                    result = (T)Convert.ChangeType(values[0], typeof(T));
-                }
-            }
-            return result;
-        }
-
         public AppContext Build()
         {
-            AtomicParsleyPath = Environment.ExpandEnvironmentVariables(AtomicParsleyPath);
-            FfmpegPath = Environment.ExpandEnvironmentVariables(FfmpegPath);
-            FfprobePath = Environment.ExpandEnvironmentVariables(FfprobePath);
-            SourcePath = Environment.ExpandEnvironmentVariables(SourcePath);
+            AtomicParsley = Environment.ExpandEnvironmentVariables(AtomicParsley);
+            Ffmpeg = Environment.ExpandEnvironmentVariables(Ffmpeg);
+            Ffprobe = Environment.ExpandEnvironmentVariables(Ffprobe);
+            InputDirectory = Environment.ExpandEnvironmentVariables(InputDirectory);
             IntermediateDirectory = Environment.ExpandEnvironmentVariables(IntermediateDirectory);
             TargetDirectory = Environment.ExpandEnvironmentVariables(TargetDirectory);
+
+            AtomicParsleyCommand = new ConsoleClient(AtomicParsley);
+            FfmpegCommand = new ConsoleClient(Ffmpeg);
+            FfprobeCommand = new ConsoleClient(Ffprobe);
 
             return this;
         }
