@@ -24,6 +24,10 @@ namespace VideoTools
             {
                 result.Channel = channel;
             }
+            if (json.TryGetValue<string>("programs.tags.service_name", out channel))
+            {
+                result.Channel = channel;
+            }
             if (json.TryGetValue<string>("format.tags.CONTENT_TYPE", out string contentType))
             {
                 result.Genre = contentType;

@@ -14,12 +14,12 @@ namespace VideoTools
             if (item.EpisodeNumber != Helpers.InvalidEpisodeNumber
                 && item.SeasonNumber != Helpers.InvalidSeasonNumber)
             {
-                result = $"{item.Title} s{item.SeasonNumber}e{item.EpisodeNumber}";
+                result = $"{item.ShowName} s{item.SeasonNumber}e{item.EpisodeNumber}";
             }
             else
             {
                 string aired = item.AiredTime.ToString("yyyy-MM-dd HH:mm");
-                result = $"{item.Title} {aired}";
+                result = $"{item.ShowName} {aired}";
             }
 
             return Helpers.MakeFileNameSafe(result, '-');

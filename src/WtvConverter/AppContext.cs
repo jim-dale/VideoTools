@@ -13,7 +13,7 @@ namespace WtvConverter
         public string AtomicParsley { get; set; }
         public string InputDirectory { get; set; }
         public string IntermediateDirectory { get; set; }
-        public string TargetDirectory { get; set; }
+        public string OutputDirectory { get; set; }
         public string SearchPatterns { get; set; }
         public bool DeleteIntermediateFile { get; set; }
         public bool WhatIf { get; set; }
@@ -25,7 +25,7 @@ namespace WtvConverter
         public AppContext SetDefaults()
         {
             IntermediateDirectory = Path.GetTempPath();
-            SearchPatterns = @"*.wtv";
+            SearchPatterns = "*.wtv";
 
             return this;
         }
@@ -38,7 +38,7 @@ namespace WtvConverter
 
             InputDirectory = settings.GetAs(InputDirectory, nameof(InputDirectory));
             IntermediateDirectory = settings.GetAs(IntermediateDirectory, nameof(IntermediateDirectory));
-            TargetDirectory = settings.GetAs(TargetDirectory, nameof(TargetDirectory));
+            OutputDirectory = settings.GetAs(OutputDirectory, nameof(OutputDirectory));
 
             SearchPatterns = settings.GetAs(SearchPatterns, nameof(SearchPatterns));
 
@@ -55,8 +55,6 @@ namespace WtvConverter
             Ffmpeg = Environment.ExpandEnvironmentVariables(Ffmpeg);
             Ffprobe = Environment.ExpandEnvironmentVariables(Ffprobe);
             InputDirectory = Environment.ExpandEnvironmentVariables(InputDirectory);
-            IntermediateDirectory = Environment.ExpandEnvironmentVariables(IntermediateDirectory);
-            TargetDirectory = Environment.ExpandEnvironmentVariables(TargetDirectory);
 
             AtomicParsleyCommand = new ConsoleClient(AtomicParsley);
             FfmpegCommand = new ConsoleClient(Ffmpeg);

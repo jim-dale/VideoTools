@@ -8,9 +8,9 @@ namespace VideoTools
     public enum FileScopePolicy
     {
         None = 0x00,                // Default policy, don't overwrite output files
-        ForceCreate = 0x01,         // Overwrite output files
-        DeleteOnDispose = 0x02,     // Delete file when FileScope object disposed
-        WhatIf = 0x04,              // Simulate file operations
+        WhatIf = 0x01,              // Simulate file operations
+        Overwrite = 0x02,         // Overwrite output files
+        DeleteOnDispose = 0x04,     // Delete file when FileScope object disposed
     }
 
     public class FileScope : IDisposable
@@ -25,11 +25,11 @@ namespace VideoTools
         {
         }
 
-        public static FileScope Create(string path, bool forceCreate = false, bool deleteOnDispose = false, bool whatIf = false)
+        public static FileScope Create(string path, bool whatIf = false, bool overwrite = false, bool deleteOnDispose = false)
         {
-            FileScopePolicy policy = ((forceCreate) ? FileScopePolicy.ForceCreate : FileScopePolicy.None)
-                | ((deleteOnDispose) ? FileScopePolicy.DeleteOnDispose : FileScopePolicy.None)
-                | ((whatIf) ? FileScopePolicy.WhatIf : FileScopePolicy.None);
+            FileScopePolicy policy = ((whatIf) ? FileScopePolicy.WhatIf : FileScopePolicy.None)
+                                   | ((overwrite) ? FileScopePolicy.Overwrite : FileScopePolicy.None)
+                                   | ((deleteOnDispose) ? FileScopePolicy.DeleteOnDispose : FileScopePolicy.None);
 
             return new FileScope(path, policy);
         }
@@ -42,7 +42,7 @@ namespace VideoTools
 
         public bool TryCreate(Func<FileScope, bool, bool> action)
         {
-            bool result = (Policy & FileScopePolicy.ForceCreate) == FileScopePolicy.ForceCreate;
+            bool result = (Policy & FileScopePolicy.Overwrite) == FileScopePolicy.Overwrite;
             if (result == false)
             {
                 // Only try to create the file if it doesn't exist
@@ -66,7 +66,7 @@ namespace VideoTools
             {
                 if ((Policy & FileScopePolicy.WhatIf) == FileScopePolicy.None)
                 {
-                    Helpers.RemoveFile(Path);
+                    File.Delete(Path);
                 }
                 Path = null;
             }

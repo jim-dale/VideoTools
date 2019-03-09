@@ -7,23 +7,15 @@ namespace VideoTools
 
     public static partial class TvEpisodeExtensions
     {
+        private static readonly string[] _dateTimeFormats = { "yyyy-MM-dd-HH-mm", "yyyy-MM-dd HH-mm", "dd_MM_yyyy_HH_mm_ss" };
+
         public static TvEpisode FromFileName(this TvEpisode result, string fileName)
         {
-            var match = Regex.Match(fileName, @"^(.+)\s+(\d{4}-\d{2}-\d{2}[\s-]+\d{2}-\d{2})");
-            if (match.Success && match.Groups.Count == 3)
+            if (TrySetFromFileNameVariant1(result, fileName) == false)
             {
-                var showName = match.Groups[1].Value.Trim();
-
-                result.ShowName = showName;
-
-                string broadcastStr = match.Groups[2].Value.Trim();
-                if (DateTime.TryParseExact(broadcastStr, "yyyy-MM-dd HH-mm", CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out DateTime broadcastDate))
+                if (TrySetFileNameVariant2(result, fileName) == false)
                 {
-                    result.AiredTime = broadcastDate;
-                }
-                else if (DateTime.TryParseExact(broadcastStr, "yyyy-MM-dd-HH-mm", CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out broadcastDate))
-                {
-                    result.AiredTime = broadcastDate;
+                    _ = TrySetFromKodiCompatibleFileName(result, fileName);
                 }
             }
 
@@ -75,6 +67,57 @@ namespace VideoTools
                     }
                 }
             }
+        }
+
+        private static bool TrySetFromKodiCompatibleFileName(TvEpisode item, string fileName)
+        {
+            var match = Regex.Match(fileName, @"^(.+)s(\d+)e(\d+)", RegexOptions.IgnoreCase);
+            bool result = match.Success && match.Groups.Count == 4;
+            if (result)
+            {
+                item.ShowName = match.Groups[1].Value.Trim();
+                item.SeasonNumber = int.Parse(match.Groups[2].Value);
+                item.EpisodeNumber = int.Parse(match.Groups[3].Value);
+            }
+
+            return result;
+        }
+
+        private static bool TrySetFromFileNameVariant1(TvEpisode item, string fileName)
+        {
+            var match = Regex.Match(fileName, @"^(.+)(\d{4}-\d{2}-\d{2}[\s-]+\d{2}-\d{2})");
+            bool result = match.Success && match.Groups.Count == 3;
+            if (result)
+            {
+                item.ShowName = match.Groups[1].Value.Trim();
+
+                var recordTime = match.Groups[2].Value.Trim();
+                if (DateTime.TryParseExact(recordTime, _dateTimeFormats, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out DateTime broadcastDate))
+                {
+                    item.AiredTime = broadcastDate;
+                }
+            }
+
+            return result;
+        }
+
+        private static bool TrySetFileNameVariant2(TvEpisode item, string fileName)
+        {
+            var match = Regex.Match(fileName, @"^(.+)_(.+)_(\d{2}_\d{2}_\d{4}_\d{2}_\d{2}_\d{2})");
+            bool result = match.Success && match.Groups.Count == 4;
+            if (result)
+            {
+                item.ShowName = match.Groups[1].Value.Trim();
+                item.Channel = match.Groups[2].Value.Trim();
+
+                var recordTime = match.Groups[3].Value.Trim();
+                if (DateTime.TryParseExact(recordTime, _dateTimeFormats, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out DateTime broadcastDate))
+                {
+                    item.AiredTime = broadcastDate;
+                }
+            }
+
+            return result;
         }
     }
 }

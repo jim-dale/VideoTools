@@ -28,8 +28,8 @@ namespace VideoTools
             }
             if (attributes.TryGetValueAs<string>(StreamBufferRecording.BroadcastDateTime, out string dateStr))
             {
-                var date = DateTime.Parse(dateStr, CultureInfo.CurrentCulture, DateTimeStyles.AssumeUniversal);
-                if (date > DateTime.MinValue)
+                var date = DateTime.Parse(dateStr);
+                if (date != DateTime.MinValue)
                 {
                     result.OriginalAirDate = date.ToLocalTime();
                 }
