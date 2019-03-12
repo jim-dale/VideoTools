@@ -14,12 +14,12 @@ namespace VideoTools
             if (item.EpisodeNumber != Helpers.InvalidEpisodeNumber
                 && item.SeasonNumber != Helpers.InvalidSeasonNumber)
             {
-                result = $"{item.ShowName} s{item.SeasonNumber}e{item.EpisodeNumber}";
+                result = $"{item.SafeShowName} s{item.SeasonNumber}e{item.EpisodeNumber}";
             }
             else
             {
                 string aired = item.AiredTime.ToString("yyyy-MM-dd HH:mm");
-                result = $"{item.ShowName} {aired}";
+                result = $"{item.SafeShowName} {aired}";
             }
 
             return Helpers.MakeFileNameSafe(result, '-');
@@ -36,15 +36,22 @@ namespace VideoTools
                     new XElement("episode", item.EpisodeNumber)
                     );
             }
+            if (String.IsNullOrWhiteSpace(item.ShowName) == false)
+            {
+                episode.Add(new XElement("showtitle", item.ShowName));
+            }
             episode.Add(new XElement("title", item.Title));
             episode.Add(new XElement("plot", item.Description));
             episode.Add(new XElement("aired", item.AiredTime));
             episode.Add(new XElement("genre", item.Genre));
             episode.Add(new XElement("studio", item.Channel));
-            episode.Add(new XElement("credits", item.Credits));
+            if (String.IsNullOrWhiteSpace(item.Credits) == false)
+            {
+                episode.Add(new XElement("credits", item.Credits));
+            }
             if (item.OriginalAirDate != DateTime.MinValue)
             {
-                episode.Add(new XElement("premiered", item.OriginalAirDate));
+                episode.Add(new XElement("premiered", item.OriginalAirDate.Date));
             }
 
             if (String.IsNullOrWhiteSpace(item.ThumbnailFile) == false)
@@ -56,6 +63,23 @@ namespace VideoTools
             var xml = new XDocument(
                     new XDeclaration("1.0", "utf-8", "yes"),
                     episode
+                );
+
+            xml.Save(path);
+        }
+
+        public static void SaveShowNfoFile(this TvEpisode item, string path)
+        {
+            var show = new XElement("tvshow");
+
+            show.Add(new XElement("title", item.ShowName));
+            show.Add(new XElement("uniqueid",
+                new XAttribute("type", "unknown"),
+                new XAttribute("default", "true")));
+
+            var xml = new XDocument(
+                    new XDeclaration("1.0", "utf-8", "yes"),
+                    show
                 );
 
             xml.Save(path);

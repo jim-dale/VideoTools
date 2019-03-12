@@ -37,22 +37,7 @@ namespace WtvConverter
                 .WriteTo.Console()
                 .CreateLogger();
 
-            switch (_inputVideoFileExtension)
-            {
-                case ".wtv":
-                case ".dvr-ms":
-                    ProcessMediaCenterFile();
-                    break;
-                case ".mkv":
-                case ".mp4":
-                case ".mpg":
-                case ".webm":
-                case ".ts":
-                    ProcessTvhFile();
-                    break;
-                default:
-                    break;
-            }
+            ProcessTvhFile();
         }
 
         /// <summary>
@@ -86,21 +71,25 @@ namespace WtvConverter
 
         private void ProcessTvhFile()
         {
+            _attributes = GetAttributes();
             _metadata = GetMetadata();
 
             _episode = new TvEpisode()
                 .Defaults()
                 .FromFileName(_inputVideoFileName)
                 .FromJsonMetadata(_metadata)
+                .FromMediaCenterAttributes(_attributes)
                 .FromDescription()
+                .ApplyCorrections(_appContext.Corrections)
                 .Fix();
             _log.Information("Episode={@Episode}", _episode);
 
             _outputDirectory = GetOutputDirectoryScope();
             _log.Information("Output directory={@OutputDirectory}", _outputDirectory);
 
-            _outputFileName = _inputVideoFileName;
-            _log.Information("Output file name={OutputFileName}", _outputFileName);
+            //_outputFileName = _inputVideoFileName;
+            _outputFileName = _episode.GetConversionOutputFileName();
+            _log.Information("Output file name=\"{OutputFileName}\"", _outputFileName);
 
             // Copy the input video file to the output directory
             using (var outputVideoFile = FileScope.Create(GetOutputFilePath(_inputVideoFileExtension), whatIf: _appContext.WhatIf))
@@ -108,7 +97,22 @@ namespace WtvConverter
                 _ = outputVideoFile.TryCreate(TryCopyToOutputVideoFile);
             }
 
+            // Try to get a thumbnail from the input video
+            ThumbnailFileHandler();
+
+            // Generate the NFO file for Kodi
             NfoFileHandler();
+        }
+
+        private void SaveThumbnail()
+        {
+            using (var thumbnailFile = FileScope.Create(GetOutputFilePath(".jpg"), whatIf: _appContext.WhatIf))
+            {
+                if (thumbnailFile.TryCreate(TryCreateThumbnailFile))
+                {
+                    _episode.ThumbnailFile = thumbnailFile.Path;
+                }
+            }
         }
 
         private DirectoryScope GetOutputDirectoryScope()
@@ -148,15 +152,6 @@ namespace WtvConverter
                     _log.Information("Skipping file conversion because intermediate file already exists");
                 }
 
-                _metadata = GetMetadata();
-
-                using (var thumbnailFile = FileScope.Create(GetOutputFilePath(".jpg"), whatIf: _appContext.WhatIf))
-                {
-                    if (thumbnailFile.TryCreate(TryCreateThumbnailFile))
-                    {
-                        _episode.ThumbnailFile = thumbnailFile.Path;
-                    }
-                }
 
                 _log.Information("Applying media tags and copying from \"{Input}\" to \"{Output}\"", intermediateVideoFile.Path, scope.Path);
                 if (whatIf == false)
@@ -206,20 +201,44 @@ namespace WtvConverter
         /// </summary>
         private void NfoFileHandler()
         {
-            if (Helpers.IsFileNameKodiCompatible(_outputFileName) == false)
-            {
-                using (var nfoFile = FileScope.Create(GetOutputFilePath(".nfo"), whatIf: _appContext.WhatIf))
-                {
-                    _ = nfoFile.TryCreate((scope, whatIf) =>
-                    {
-                        _log.Information("Saving episode NFO file to \"{NfoPath}\"", scope.Path);
+            _log.Information("Saving episode={@Episode}", _episode);
 
-                        if (whatIf == false)
-                        {
-                            _episode.SaveNfoFile(scope.Path);
-                        }
-                        return true;
-                    });
+            using (var nfoFile = FileScope.Create(GetOutputFilePath(".nfo"), whatIf: _appContext.WhatIf))
+            {
+                _ = nfoFile.TryCreate((scope, whatIf) =>
+                {
+                    _log.Information("Saving episode NFO file to \"{NfoPath}\"", scope.Path);
+
+                    if (whatIf == false)
+                    {
+                        _episode.SaveNfoFile(scope.Path);
+                    }
+                    return true;
+                });
+            }
+            var path = Path.Combine(_outputDirectory.Path, "tvshow.nfo");
+            using (var nfoFile = FileScope.Create(path, whatIf: _appContext.WhatIf))
+            {
+                _ = nfoFile.TryCreate((scope, whatIf) =>
+                {
+                    _log.Information("Saving show NFO file to \"{NfoPath}\"", scope.Path);
+
+                    if (whatIf == false)
+                    {
+                        _episode.SaveShowNfoFile(scope.Path);
+                    }
+                    return true;
+                });
+            }
+        }
+
+        private void ThumbnailFileHandler()
+        {
+            using (var thumbnailFile = FileScope.Create(GetOutputFilePath(".jpg"), whatIf: _appContext.WhatIf))
+            {
+                if (thumbnailFile.TryCreate(TryCreateThumbnailFile))
+                {
+                    _episode.ThumbnailFile = thumbnailFile.Path;
                 }
             }
         }
@@ -234,7 +253,7 @@ namespace WtvConverter
             {
                 if (whatIf == false)
                 {
-                    _appContext.FfmpegCommand.ExtractThumbnailToFile(_inputVideoFile, streamIndex, scope.Path);
+                    _appContext.FfmpegCommand.ExtractThumbnailToFile(_inputVideoFile, scope.Path);
 
                     result = _appContext.FfmpegCommand.ExitCode == 0 && File.Exists(scope.Path);
 
@@ -261,7 +280,7 @@ namespace WtvConverter
             if (_metadata is null)
             {
                 _metadata = RunProbe(_inputVideoFile);
-                _log.Information("Media tags {@metadata}", _metadata);
+                _log.Information("Media tags {@metadata}", _metadata.Text);
             }
 
             return _metadata;

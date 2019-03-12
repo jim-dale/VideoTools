@@ -2,6 +2,7 @@
 namespace WtvConverter
 {
     using System;
+    using System.Collections.Generic;
     using System.Collections.Specialized;
     using System.IO;
     using VideoTools;
@@ -15,12 +16,15 @@ namespace WtvConverter
         public string IntermediateDirectory { get; set; }
         public string OutputDirectory { get; set; }
         public string SearchPatterns { get; set; }
+        public string ShowNameCorrectionsFile { get; set; }
         public bool DeleteIntermediateFile { get; set; }
         public bool WhatIf { get; set; }
 
         public ConsoleClient FfmpegCommand { get; private set; }
         public ConsoleClient FfprobeCommand { get; private set; }
         public ConsoleClient AtomicParsleyCommand { get; private set; }
+
+        public IList<ShowNameCorrection> Corrections { get; private set; }
 
         public AppContext SetDefaults()
         {
@@ -39,8 +43,8 @@ namespace WtvConverter
             InputDirectory = settings.GetAs(InputDirectory, nameof(InputDirectory));
             IntermediateDirectory = settings.GetAs(IntermediateDirectory, nameof(IntermediateDirectory));
             OutputDirectory = settings.GetAs(OutputDirectory, nameof(OutputDirectory));
-
             SearchPatterns = settings.GetAs(SearchPatterns, nameof(SearchPatterns));
+            ShowNameCorrectionsFile = settings.GetAs(ShowNameCorrectionsFile, nameof(ShowNameCorrectionsFile));
 
             DeleteIntermediateFile = settings.GetAs(DeleteIntermediateFile, nameof(DeleteIntermediateFile));
 
@@ -49,16 +53,19 @@ namespace WtvConverter
             return this;
         }
 
-        public AppContext Build()
+        public AppContext Initialise()
         {
             AtomicParsley = Environment.ExpandEnvironmentVariables(AtomicParsley);
             Ffmpeg = Environment.ExpandEnvironmentVariables(Ffmpeg);
             Ffprobe = Environment.ExpandEnvironmentVariables(Ffprobe);
             InputDirectory = Environment.ExpandEnvironmentVariables(InputDirectory);
+            ShowNameCorrectionsFile = Environment.ExpandEnvironmentVariables(ShowNameCorrectionsFile);
 
             AtomicParsleyCommand = new ConsoleClient(AtomicParsley);
             FfmpegCommand = new ConsoleClient(Ffmpeg);
             FfprobeCommand = new ConsoleClient(Ffprobe);
+
+            Corrections = ShowNameCorrection.LoadFromFile(ShowNameCorrectionsFile);
 
             return this;
         }

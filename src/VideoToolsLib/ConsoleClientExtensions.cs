@@ -5,7 +5,6 @@ namespace VideoTools
 
     public static partial class ConsoleClientExtensions
     {
-        //ffmpeg -hide_banner -v quiet -i "D:\Recorded TV\20th Century Battlefields_Yesterday_26_09_2009_15_00_03.dvr-ms" -map 0:v -map -V thumbnail2.jpg
         public static void GetMetadataAsJson(this ConsoleClient item, string source)
         {
             var args = new string[]
@@ -22,7 +21,6 @@ namespace VideoTools
             item.Run(args);
         }
 
-        
         public static void ConvertTransportStreamToMp4File(this ConsoleClient item, string input, string output)
         {
             var args = new string[]
@@ -60,25 +58,41 @@ namespace VideoTools
 
             item.Run(args);
         }
-        // ffmpeg -hide_banner -i "20th Century Battlefields_Yesterday_10_08_2009_14_56_04.dvr-ms" -map 0:m:title:"TV Thumbnail" -vframes 1 poo.jpg
-        //ffmpeg -hide_banner -i "A Great British Story_BBC ONE_2012_06_12_22_30_00.wtv" -map 0:m:title:"TV Thumbnail" -vframes 1 poo.jpg
-        public static void ExtractThumbnailToFile(this ConsoleClient item, string source, int streamIndex, string target)
+
+        /// <summary>
+        /// Extract thumbnail image from video file
+        /// </summary>
+        /// <param name="item"></param>
+        /// <param name="input">Video file to try to extract thumbnail from</param>
+        /// <param name="output">Destination path for the thumbnail</param>
+        /// <remarks>
+        /// There are a number of ways of extracting a static thumbnail from a video file including the following:-
+        ///     This requires that the thumbnail video track has a metadata tag 'title' with the value 'TV Thumbnail'
+        ///<code>
+        /// ffmpeg -hide_banner -i "<paramref name="input"/>" -map 0:m:title:"TV Thumbnail" -vframes 1 "<paramref name="output"/>"
+        ///</code>
+        ///
+        /// <code>
+        ///     ffmpeg -hide_banner -i "<paramref name="input"/>" -map 0:v -map -V -vframes 1 "<paramref name="output"/>"
+        /// </code>
+        /// </remarks>
+        public static void ExtractThumbnailToFile(this ConsoleClient item, string input, string output)
         {
             var args = new string[]
             {
                 "-hide_banner",
                 "-v quiet",
-                $"-i \"{source}\"",
-                $"-map :{streamIndex}",
+                $"-i \"{input}\"",
+                "-map 0:m:title:\"TV Thumbnail\"",
                 "-vframes 1",
                 "-y",
-                $"\"{target}\""
+                $"\"{output}\""
             };
 
             item.Run(args);
         }
 
-        public static void SetMp4FileMetadata(this ConsoleClient item, TvEpisode episode, string source, string target)
+        public static void SetMp4FileMetadata(this ConsoleClient item, TvEpisode episode, string input, string output)
         {
             var seasonNumArg = (episode.SeasonNumber == Helpers.InvalidSeasonNumber) ? String.Empty : $"--TVSeasonNum {episode.SeasonNumber}";
             var episodeNumArg = (episode.EpisodeNumber == Helpers.InvalidEpisodeNumber) ? String.Empty : $"--TVEpisodeNum {episode.EpisodeNumber}";
@@ -87,7 +101,7 @@ namespace VideoTools
 
             var args = new string[]
             {
-                $"\"{source}\"",
+                $"\"{input}\"",
                 $"--title \"{episode.Title}\"",
                 "--stik \"TV Show\"",
                 $"--year \"{aired}\"",
@@ -99,7 +113,7 @@ namespace VideoTools
                 $"--description \"{episode.Description}\"",
                 $"--comment \"{episode.Credits}\"",
                 artworkArg,
-                $"--output \"{target}\""
+                $"--output \"{output}\""
             };
 
             item.Run(args);

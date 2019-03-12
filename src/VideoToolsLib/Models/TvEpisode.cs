@@ -8,6 +8,7 @@ namespace VideoTools
         public int SeasonNumber { get; set; }               // <season></season>                                                        TVSeasonNum
         public int EpisodeNumber { get; set; }              // <episode></episode>                                                      TVEpisode
         public string ShowName { get; set; }                // <showtitle></showtitle>      Title                                       TVShowName
+        public string SafeShowName { get; set; }            //
         public string Title { get; set; }                   // <title></title>              Title                                       title
         public string Description { get; set; }             // <plot></plot>                WM/SubTitleDescription                      description
         public TimeSpan Duration { get; set; }              //                              Duration

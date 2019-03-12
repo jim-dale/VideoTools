@@ -20,6 +20,8 @@ namespace VideoTools
             {
                 result.ShowName = result.ShowName.RemoveOptionalPrefix(Prefix).Trim();
                 result.ShowName = result.ShowName.RemoveOptionalPrefix(Replacement).Trim();
+
+                result.SafeShowName = Helpers.MakeFileNameSafe(result.ShowName);
             }
             if (String.IsNullOrEmpty(result.Title) == false)
             {

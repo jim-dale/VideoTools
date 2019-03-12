@@ -5,8 +5,6 @@ using Serilog;
 
 namespace WtvConverter
 {
-    // converted intermediate video file
-    // output
     internal class Program
     {
         private static int Main(string[] args)
@@ -23,7 +21,7 @@ namespace WtvConverter
                 var appContext = new AppContext()
                     .SetDefaults()
                     .SetFromConfiguration(ConfigurationManager.AppSettings)
-                    .Build();
+                    .Initialise();
 
                 Log.Information("{@AppContext}", appContext);
 
@@ -66,6 +64,8 @@ namespace WtvConverter
                 {
                     Log.Error(exception, "Failed to process {Path}", file);
                 }
+
+                break;
             }
         }
     }
