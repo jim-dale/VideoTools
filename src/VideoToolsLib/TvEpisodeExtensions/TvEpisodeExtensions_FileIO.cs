@@ -14,7 +14,7 @@ namespace VideoTools
             if (item.EpisodeNumber != Helpers.InvalidEpisodeNumber
                 && item.SeasonNumber != Helpers.InvalidSeasonNumber)
             {
-                result = $"{item.SafeShowName} s{item.SeasonNumber}e{item.EpisodeNumber}";
+                result = $"{item.SafeShowName} s{item.SeasonNumber:D2}e{item.EpisodeNumber:D2}";
             }
             else
             {
