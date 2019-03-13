@@ -9,7 +9,7 @@ namespace VideoTools
     {
         public static string GetConversionOutputFileName(this TvEpisode item)
         {
-            var result = default(string);
+            var result = item.SafeShowName;
 
             if (item.EpisodeNumber != Helpers.InvalidEpisodeNumber
                 && item.SeasonNumber != Helpers.InvalidSeasonNumber)
@@ -18,8 +18,11 @@ namespace VideoTools
             }
             else
             {
-                string aired = item.AiredTime.ToString("yyyy-MM-dd HH:mm");
-                result = $"{item.SafeShowName} {aired}";
+                if (item.AiredTime != DateTime.MinValue)
+                {
+                    string aired = item.AiredTime.ToString("yyyy-MM-dd HH:mm");
+                    result = $"{item.SafeShowName} {aired}";
+                }
             }
 
             return Helpers.MakeFileNameSafe(result, '-');
@@ -41,10 +44,22 @@ namespace VideoTools
                 episode.Add(new XElement("showtitle", item.ShowName));
             }
             episode.Add(new XElement("title", item.Title));
-            episode.Add(new XElement("plot", item.Description));
-            episode.Add(new XElement("aired", item.AiredTime));
-            episode.Add(new XElement("genre", item.Genre));
-            episode.Add(new XElement("studio", item.Channel));
+            if (String.IsNullOrWhiteSpace(item.Description) == false)
+            {
+                episode.Add(new XElement("plot", item.Description));
+            }
+            if (item.AiredTime != DateTime.MinValue)
+            {
+                episode.Add(new XElement("aired", item.AiredTime));
+            }
+            if (String.IsNullOrWhiteSpace(item.Genre) == false)
+            {
+                episode.Add(new XElement("genre", item.Genre));
+            }
+            if (String.IsNullOrWhiteSpace(item.Channel) == false)
+            {
+                episode.Add(new XElement("studio", item.Channel));
+            }
             if (String.IsNullOrWhiteSpace(item.Credits) == false)
             {
                 episode.Add(new XElement("credits", item.Credits));

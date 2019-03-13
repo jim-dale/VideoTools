@@ -8,23 +8,45 @@ namespace VideoTools
     {
         public static TvEpisode FromJsonMetadata(this TvEpisode result, JsonPayload json)
         {
-            if (json.TryGetValue<string>("format.tags.DATE_BROADCASTED", out string broadcastDateStr))
+            if (json.TryGetValue<string>("format.tags.DATE_BROADCASTED", out string broadcastDateStr) == false)
             {
-                result.AiredTime = DateTime.Parse(broadcastDateStr, CultureInfo.CurrentCulture, DateTimeStyles.AssumeUniversal);
+                _ = json.TryGetValue<string>("format.tags.date", out broadcastDateStr);
+            }
+            if (String.IsNullOrWhiteSpace(broadcastDateStr) == false)
+            {
+                if (DateTime.TryParse(broadcastDateStr, CultureInfo.CurrentCulture, DateTimeStyles.AssumeUniversal, out DateTime date))
+                {
+                    result.AiredTime = date;
+                }
             }
             if (json.TryGetValue<string>("format.tags.title", out string title))
             {
                 result.Title = title;
             }
-            if (json.TryGetValue<string>("format.tags.SUMMARY", out string summary))
+            if (json.TryGetValue<string>("format.tags.show", out string show))
             {
-                result.Description = summary;
+                result.ShowName = show;
             }
-            if (json.TryGetValue<string>("format.tags.TVCHANNEL", out string channel))
+            if (json.TryGetValue<string>("format.tags.SUMMARY", out string description) == false)
             {
-                result.Channel = channel;
+                _ = json.TryGetValue<string>("format.tags.description", out description);
             }
-            if (json.TryGetValue<string>("programs.tags.service_name", out channel))
+            if (String.IsNullOrWhiteSpace(description) == false)
+            {
+                result.Description = description;
+            }
+            if (json.TryGetValue<double>("format.duration", out double duration))
+            {
+                result.Duration = TimeSpan.FromSeconds(duration);
+            }
+            if (json.TryGetValue<string>("format.tags.TVCHANNEL", out string channel) == false)
+            {
+                if (json.TryGetValue<string>("format.tags.network", out channel) == false)
+                {
+                    _ = json.TryGetValue<string>("programs.tags.service_name", out channel);
+                }
+            }
+            if (String.IsNullOrWhiteSpace(channel) == false)
             {
                 result.Channel = channel;
             }

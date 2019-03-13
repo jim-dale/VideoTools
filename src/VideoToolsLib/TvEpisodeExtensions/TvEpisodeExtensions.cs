@@ -5,7 +5,7 @@ namespace VideoTools
 
     public static partial class TvEpisodeExtensions
     {
-        public static TvEpisode Fix(this TvEpisode result)
+        public static TvEpisode FixTitleAndShowName(this TvEpisode result)
         {
             const string Prefix = "New_";
             const string Replacement = "New:";
@@ -13,15 +13,18 @@ namespace VideoTools
             // Order is important - don't change
             if (String.IsNullOrEmpty(result.Title))
             {
-                string aired = result.AiredTime.ToString("yyyy-MM-dd HH:mm");
-                result.Title = $"{result.ShowName} {aired}";
+                result.Title = result.ShowName;
+
+                if (result.AiredTime != DateTime.MinValue)
+                {
+                    string aired = result.AiredTime.ToString("yyyy-MM-dd HH:mm");
+                    result.Title = $"{result.ShowName} {aired}";
+                }
             }
             if (string.IsNullOrEmpty(result.ShowName) == false)
             {
                 result.ShowName = result.ShowName.RemoveOptionalPrefix(Prefix).Trim();
                 result.ShowName = result.ShowName.RemoveOptionalPrefix(Replacement).Trim();
-
-                result.SafeShowName = Helpers.MakeFileNameSafe(result.ShowName);
             }
             if (String.IsNullOrEmpty(result.Title) == false)
             {
@@ -30,6 +33,13 @@ namespace VideoTools
                     result.Title = Replacement + result.Title.Substring(Prefix.Length);
                 }
             }
+            return result;
+        }
+
+        public static TvEpisode SetSafeShowName(this TvEpisode result)
+        {
+            result.SafeShowName = Helpers.MakeFileNameSafe(result.ShowName);
+
             return result;
         }
 

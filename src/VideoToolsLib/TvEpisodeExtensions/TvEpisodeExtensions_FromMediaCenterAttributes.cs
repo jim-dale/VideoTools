@@ -3,7 +3,6 @@ namespace VideoTools
 {
     using System;
     using System.Collections.Generic;
-    using System.Globalization;
     using DirectShowLib.SBE;
 
     public static partial class TvEpisodeExtensions

@@ -53,7 +53,7 @@ namespace WtvConverter
             {
                 try
                 {
-                    using (Log.Logger.BeginTimedOperation("Process file", file))
+                    using (Log.Logger.BeginTimedOperation("Processing file", file))
                     {
                         var fileContext = new FileContext(appContext, file);
 

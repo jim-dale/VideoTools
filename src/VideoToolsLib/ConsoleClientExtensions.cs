@@ -21,7 +21,7 @@ namespace VideoTools
             item.Run(args);
         }
 
-        public static void ConvertTransportStreamToMp4File(this ConsoleClient item, string input, string output)
+        public static void ConvertTransportStreamToMkvFile(this ConsoleClient item, string input, string output)
         {
             var args = new string[]
             {
@@ -32,7 +32,7 @@ namespace VideoTools
                 "-vf yadif",            // Deinterlace the input video
                 "-map 0:V",             // include all video streams that are not attached pictures, video thumbnails or cover art
                 "-map 0:a",             // include all audio streams
-                "-map 0:s?",             // include all audio streams
+                "-map 0:s?",            // include all subtitle streams (optional)
                 "-vcodec h264",         // encode video streams as H264
                 "-acodec aac",          // encode audio streams as AAC
                 "-scodec dvbsub",       // encode subtitle streams as dvbsub
@@ -52,6 +52,10 @@ namespace VideoTools
                 "-nostats",             // Don't display statistics
                 $"-i \"{input}\"",      // Input video
                 "-vf yadif",            // Deinterlace the input video
+                //"-map 0:V",             // include all video streams that are not attached pictures, video thumbnails or cover art
+                //"-map 0:a",             // include all audio streams
+                //"-vcodec h264",         // encode video streams as H264
+                //"-acodec aac",          // encode audio streams as AAC
                 "-y",                   // Overwrite the output file if it exists
                 $"\"{output}\""         // Output video file
             };

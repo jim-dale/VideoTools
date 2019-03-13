@@ -11,9 +11,9 @@ namespace VideoTools
 
         public static TvEpisode FromFileName(this TvEpisode result, string fileName)
         {
-            if (TrySetFromFileNameVariant1(result, fileName) == false)
+            if (TrySetFromTvheadendFileName(result, fileName) == false)
             {
-                if (TrySetFileNameVariant2(result, fileName) == false)
+                if (TrySetFromMediaCenterFileName(result, fileName) == false)
                 {
                     _ = TrySetFromKodiCompatibleFileName(result, fileName);
                 }
@@ -56,7 +56,7 @@ namespace VideoTools
         {
             if (String.IsNullOrEmpty(s) == false)
             {
-                var match = Regex.Match(s, @"S(\d+) Ep(\d+)(?:/(?:\d+))?");
+                var match = Regex.Match(s, @"s(\d+)[ ,]+ep[\s\. ]?(\d+)", RegexOptions.IgnoreCase);
                 if (match.Success && match.Groups.Count == 3)
                 {
                     if (int.TryParse(match.Groups[1].Value, out int seriesNumber)
@@ -83,9 +83,15 @@ namespace VideoTools
             return result;
         }
 
-        private static bool TrySetFromFileNameVariant1(TvEpisode item, string fileName)
+        /// <summary>
+        /// Tries to extract the TV show name and broadcast date from the file name
+        /// </summary>
+        /// <example>
+        /// Baptiste 2019-02-24 21-00
+        /// </example>
+        private static bool TrySetFromTvheadendFileName(TvEpisode item, string fileName)
         {
-            var match = Regex.Match(fileName, @"^(.+)(\d{4}-\d{2}-\d{2}[\s-]+\d{2}-\d{2})");
+            var match = Regex.Match(fileName, @"^(.+)[\s-]+(\d{4}-\d{2}-\d{2}[\s-]+\d{2}-\d{2})");
             bool result = match.Success && match.Groups.Count == 3;
             if (result)
             {
@@ -101,7 +107,13 @@ namespace VideoTools
             return result;
         }
 
-        private static bool TrySetFileNameVariant2(TvEpisode item, string fileName)
+        /// <summary>
+        /// Tries to extract the TV show name, TV channel name and broadcast date from the Windows Media Center file name
+        /// </summary>
+        /// <example>
+        /// A Long Way Down_BBC TWO_2016_07_17_21_55_00
+        /// </example>
+        private static bool TrySetFromMediaCenterFileName(TvEpisode item, string fileName)
         {
             var match = Regex.Match(fileName, @"^(.+)_(.+)_(\d{2}_\d{2}_\d{4}_\d{2}_\d{2}_\d{2})");
             bool result = match.Success && match.Groups.Count == 4;

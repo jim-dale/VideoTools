@@ -16,7 +16,8 @@ namespace WtvConverter
         private readonly string _inputVideoFileExtension;
         private Logger _log;
         private string _outputFileName;
-        private DirectoryScope _outputDirectory;
+        private string _tempDirectory;
+        private string _outputDirectory;
         private IDictionary<string, object> _attributes;
         private JsonPayload _metadata;
         private TvEpisode _episode;
@@ -37,42 +38,11 @@ namespace WtvConverter
                 .WriteTo.Console()
                 .CreateLogger();
 
-            ProcessTvhFile();
-        }
-
-        /// <summary>
-        /// input file => get metadata => (episode) => Opt:((Convert video file),(Get thumbnail),(Set metadata)) => generate NFO file
-        /// </summary>
-        private void ProcessMediaCenterFile()
-        {
             _attributes = GetAttributes();
+            _log.Information("Media attributes:{@attributes}", _attributes);
 
-            _episode = new TvEpisode()
-                .Defaults()
-                .FromFileName(_inputVideoFileName)
-                .FromMediaCenterAttributes(_attributes)
-                .FromDescription()
-                .Fix();
-            _log.Information("Episode={@Episode}", _episode);
-
-            _outputDirectory = GetOutputDirectoryScope();
-            _log.Information("Output directory={@OutputDirectory}", _outputDirectory);
-
-            _outputFileName = _episode.GetConversionOutputFileName();
-            _log.Information("Output file name={OutputFileName}", _outputFileName);
-
-            using (var outputVideoFile = FileScope.Create(GetOutputFilePath(".mp4"), whatIf: _appContext.WhatIf))
-            {
-                _ = outputVideoFile.TryCreate(TryCreateOutputVideoFile);
-            }
-
-            NfoFileHandler();
-        }
-
-        private void ProcessTvhFile()
-        {
-            _attributes = GetAttributes();
             _metadata = GetMetadata();
+            _log.Information("Media tags:{@metadata}", _metadata.Text);
 
             _episode = new TvEpisode()
                 .Defaults()
@@ -80,185 +50,152 @@ namespace WtvConverter
                 .FromJsonMetadata(_metadata)
                 .FromMediaCenterAttributes(_attributes)
                 .FromDescription()
-                .ApplyCorrections(_appContext.Corrections)
-                .Fix();
-            _log.Information("Episode={@Episode}", _episode);
+                .FixTitleAndShowName()
+                .SetSafeShowName().Log(_log, "Episode");
 
-            _outputDirectory = GetOutputDirectoryScope();
-            _log.Information("Output directory={@OutputDirectory}", _outputDirectory);
-
-            //_outputFileName = _inputVideoFileName;
             _outputFileName = _episode.GetConversionOutputFileName();
-            _log.Information("Output file name=\"{OutputFileName}\"", _outputFileName);
+            _log.Information("Output file name:\"{OutputFileName}\"", _outputFileName);
 
-            // Copy the input video file to the output directory
-            using (var outputVideoFile = FileScope.Create(GetOutputFilePath(_inputVideoFileExtension), whatIf: _appContext.WhatIf))
+            var outputFile = GetOutputFile(".mp4");
+            _log.Information("Output file:\"{OutputFile}\"", outputFile);
+
+            bool tempFileCreated = false;
+
+            if (File.Exists(outputFile) == false)
             {
-                _ = outputVideoFile.TryCreate(TryCopyToOutputVideoFile);
-            }
+                var tempFile = GetTemporaryFile();
+                _log.Information("Temporary file:\"{TempFile}\"", tempFile);
 
-            // Try to get a thumbnail from the input video
-            ThumbnailFileHandler();
-
-            // Generate the NFO file for Kodi
-            NfoFileHandler();
-        }
-
-        private void SaveThumbnail()
-        {
-            using (var thumbnailFile = FileScope.Create(GetOutputFilePath(".jpg"), whatIf: _appContext.WhatIf))
-            {
-                if (thumbnailFile.TryCreate(TryCreateThumbnailFile))
+                if (File.Exists(tempFile) == false)
                 {
-                    _episode.ThumbnailFile = thumbnailFile.Path;
+                    tempFileCreated = _appContext.WhatIf;
+
+                    if (_appContext.WhatIf == false)
+                    {
+                        _appContext.FfmpegCommand.ConvertWtvToMp4File(_inputVideoFile, tempFile);
+                        _log.Information("ConvertWtvToMp4File:{@ffmpeg}", _appContext.FfmpegCommand);
+
+                        tempFileCreated = _appContext.FfmpegCommand.ExitCode == 0 && File.Exists(tempFile);
+                    }
                 }
-            }
-        }
-
-        private DirectoryScope GetOutputDirectoryScope()
-        {
-            var result = DirectoryScope.Create(_appContext.OutputDirectory, whatIf: _appContext.WhatIf)
-                .ExpandEnvironmentVariables()
-                .FormatWith(_episode)
-                .EnsureCreated();
-
-            return result;
-        }
-
-        private DirectoryScope GetIntermediateDirectoryScope()
-        {
-            var result = DirectoryScope.Create(_appContext.IntermediateDirectory, whatIf: _appContext.WhatIf)
-                .ExpandEnvironmentVariables()
-                .EnsureCreated();
-
-            return result;
-        }
-
-        private FileScope GetIntermediateFileScope()
-        {
-            var directory = GetIntermediateDirectoryScope();
-            var path = GetIntermediateFilePath(directory.Path, _inputVideoFileName);
-            var result = FileScope.Create(path, deleteOnDispose: _appContext.DeleteIntermediateFile, whatIf: _appContext.WhatIf);
-
-            return result;
-        }
-
-        private bool TryCreateOutputVideoFile(FileScope scope, bool whatIf)
-        {
-            using (var intermediateVideoFile = GetIntermediateFileScope())
-            {
-                if (intermediateVideoFile.TryCreate(TryConvertToMp4) == false)
+                else
                 {
-                    _log.Information("Skipping file conversion because intermediate file already exists");
+                    _log.Information("Not converting input file because the converted file already exists");
                 }
 
-
-                _log.Information("Applying media tags and copying from \"{Input}\" to \"{Output}\"", intermediateVideoFile.Path, scope.Path);
-                if (whatIf == false)
+                if (tempFileCreated)
                 {
-                    // AtomicParsley sets the ID3 metadata tags but also copies the intermediate file to the output file
-                    _appContext.AtomicParsleyCommand.SetMp4FileMetadata(_episode, intermediateVideoFile.Path, scope.Path);
+                    var thumbnailFile = GetOutputFile(".jpg");
+                    if (TryCreateThumbnailFile(thumbnailFile))
+                    {
+                        _episode.ThumbnailFile = thumbnailFile;
+                    }
 
-                    _log.Information("Set media tags {@AtomicParsley}", _appContext.AtomicParsleyCommand);
+                    if (_appContext.WhatIf == false)
+                    {
+                        _appContext.AtomicParsleyCommand.SetMp4FileMetadata(_episode, tempFile, outputFile);
+                        _log.Information("SetMp4FileMetadata:{@AtomicParsley}", _appContext.AtomicParsleyCommand);
+                    }
+
+                    NfoFileHandler();
+
+                    if (_appContext.DeleteTempFile && tempFileCreated)
+                    {
+                        if (_appContext.WhatIf == false)
+                        {
+                            _log.Information("Deleting temporary file:\"{TempFile}\"", tempFile);
+                            File.Delete(tempFile);
+                        }
+                    }
                 }
             }
-
-            return true;
+            else
+            {
+                _log.Information("Not processing input file because the output file already exists");
+            }
         }
 
-        private bool TryCopyToOutputVideoFile(FileScope scope, bool whatIf)
+        private string GetTemporaryFile()
         {
-            _log.Information("Copying video file from \"{Input}\" to \"{Output}\"", _inputVideoFile, scope.Path);
-
-            if (whatIf == false)
-            {
-                bool overwrite = (scope.Policy & FileScopePolicy.Overwrite) == FileScopePolicy.Overwrite;
-
-                File.Copy(_inputVideoFile, scope.Path, overwrite);
-
-                _log.Information("Copied video file from \"{Input}\" to \"{Output}\"", _inputVideoFile, scope.Path);
-            }
-
-            return true;
+            var fileName = _inputVideoFileName + ".mp4";
+            return Path.Combine(GetTempDirectory(), fileName);
         }
 
-        private bool TryConvertToMp4(FileScope scope, bool whatIf)
+        private string GetOutputFile(string extension)
         {
-            _log.Information("Converting video file from \"{Input}\" to \"{Output}\"", _inputVideoFile, scope.Path);
+            var fileName = _outputFileName + extension;
+            return Path.Combine(GetOutputDirectory(), fileName);
+        }
 
-            if (whatIf == false)
+        private string GetTempDirectory()
+        {
+            if (_tempDirectory is null)
             {
-                _appContext.FfmpegCommand.ConvertWtvToMp4File(_inputVideoFile, scope.Path);
+                var path = Environment.ExpandEnvironmentVariables(_appContext.TempDirectory);
 
-                _log.Information("Converted video file {@ffmpeg}", _appContext.FfmpegCommand);
+                if (Directory.Exists(path) == false)
+                {
+                    Directory.CreateDirectory(path);
+                }
+
+                _tempDirectory = path;
             }
+            return _tempDirectory;
+        }
 
-            return true;
+        private string GetOutputDirectory()
+        {
+            if (_outputDirectory is null)
+            {
+                var path = Environment.ExpandEnvironmentVariables(_appContext.OutputDirectory)
+                    .FormatWith(_episode);
+
+                if (Directory.Exists(path) == false)
+                {
+                    Directory.CreateDirectory(path);
+                }
+
+                _outputDirectory = path;
+            }
+            return _outputDirectory;
         }
 
         /// <summary>
-        /// Writes a Kodi episode NFO file to the destination directory
+        /// Writes a Kodi episode NFO file to the destination directory unless the output video file name is Kodi compatible
         /// </summary>
         private void NfoFileHandler()
         {
-            _log.Information("Saving episode={@Episode}", _episode);
-
-            using (var nfoFile = FileScope.Create(GetOutputFilePath(".nfo"), whatIf: _appContext.WhatIf))
+            if (Helpers.IsFileNameKodiCompatible(_outputFileName))
             {
-                _ = nfoFile.TryCreate((scope, whatIf) =>
-                {
-                    _log.Information("Saving episode NFO file to \"{NfoPath}\"", scope.Path);
-
-                    if (whatIf == false)
-                    {
-                        _episode.SaveNfoFile(scope.Path);
-                    }
-                    return true;
-                });
+                _log.Information("Not generating Kodi TV episode NFO file because output file name is compatible with Kodi");
             }
-            var path = Path.Combine(_outputDirectory.Path, "tvshow.nfo");
-            using (var nfoFile = FileScope.Create(path, whatIf: _appContext.WhatIf))
+            else
             {
-                _ = nfoFile.TryCreate((scope, whatIf) =>
-                {
-                    _log.Information("Saving show NFO file to \"{NfoPath}\"", scope.Path);
+                _log.Information("Saving episode:{@Episode}", _episode);
 
-                    if (whatIf == false)
-                    {
-                        _episode.SaveShowNfoFile(scope.Path);
-                    }
-                    return true;
-                });
-            }
-        }
+                var path = GetOutputFile(".nfo");
 
-        private void ThumbnailFileHandler()
-        {
-            using (var thumbnailFile = FileScope.Create(GetOutputFilePath(".jpg"), whatIf: _appContext.WhatIf))
-            {
-                if (thumbnailFile.TryCreate(TryCreateThumbnailFile))
+                if (_appContext.WhatIf == false)
                 {
-                    _episode.ThumbnailFile = thumbnailFile.Path;
+                    _log.Information("Saving episode NFO file to \"{EpisodeNfoPath}\"", path);
+
+                    _episode.SaveNfoFile(path);
                 }
             }
         }
 
-        private bool TryCreateThumbnailFile(FileScope scope, bool whatIf)
+        private bool TryCreateThumbnailFile(string path)
         {
-            bool result = whatIf;       // return true when whatIf is true
+            bool result = _appContext.WhatIf;
 
-            _log.Information("Saving video thumbnail file from \"{Input}\" to \"{Output}\"", _inputVideoFile, scope.Path);
+            _log.Information("Extracting thumbnail from \"{Input}\" to \"{Output}\"", _inputVideoFile, path);
 
-            if (_metadata.TryGetThumbnailStreamIndex(out int streamIndex))
+            if (_appContext.WhatIf == false)
             {
-                if (whatIf == false)
-                {
-                    _appContext.FfmpegCommand.ExtractThumbnailToFile(_inputVideoFile, scope.Path);
+                _appContext.FfmpegCommand.ExtractThumbnailToFile(_inputVideoFile, path);
 
-                    result = _appContext.FfmpegCommand.ExitCode == 0 && File.Exists(scope.Path);
-
-                    _log.Information("Saved video thumbnail file {@ffmpeg}", _appContext.FfmpegCommand);
-                }
+                _log.Information("ExtractThumbnailToFile:{@ffmpeg}", _appContext.FfmpegCommand);
+                result = _appContext.FfmpegCommand.ExitCode == 0 && File.Exists(path);
             }
 
             return result;
@@ -269,7 +206,6 @@ namespace WtvConverter
             if (_attributes is null)
             {
                 _attributes = WtvAttributeReader.GetAttributes(_inputVideoFile);
-                _log.Information("Media attributes {@attributes}", _attributes);
             }
 
             return _attributes;
@@ -279,39 +215,15 @@ namespace WtvConverter
         {
             if (_metadata is null)
             {
-                _metadata = RunProbe(_inputVideoFile);
-                _log.Information("Media tags {@metadata}", _metadata.Text);
+                _appContext.FfprobeCommand.GetMetadataAsJson(_inputVideoFile);
+
+                if (String.IsNullOrEmpty(_appContext.FfprobeCommand.StandardOutput) == false)
+                {
+                    _metadata = new JsonPayload(_appContext.FfprobeCommand.StandardOutput);
+                }
             }
 
             return _metadata;
-        }
-
-        private JsonPayload RunProbe(string source)
-        {
-            var result = default(JsonPayload);
-
-            _appContext.FfprobeCommand.GetMetadataAsJson(source);
-
-            if (String.IsNullOrEmpty(_appContext.FfprobeCommand.StandardOutput) == false)
-            {
-                result = new JsonPayload(_appContext.FfprobeCommand.StandardOutput);
-            }
-
-            return result;
-        }
-
-        private string GetIntermediateFilePath(string intermediateDirectory, string fileName)
-        {
-            string newFileName = fileName + ".tmp";
-
-            return Path.Combine(intermediateDirectory, newFileName);
-        }
-
-        private string GetOutputFilePath(string extension)
-        {
-            string fileName = _outputFileName + extension;
-
-            return Path.Combine(_outputDirectory.Path, fileName);
         }
 
         public void Dispose()
