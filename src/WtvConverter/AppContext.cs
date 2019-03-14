@@ -51,6 +51,7 @@ namespace WtvConverter
             Ffprobe = Environment.ExpandEnvironmentVariables(Ffprobe);
             InputDirectory = Environment.ExpandEnvironmentVariables(InputDirectory);
             TempDirectory = Environment.ExpandEnvironmentVariables(TempDirectory);
+            OutputDirectory = Environment.ExpandEnvironmentVariables(OutputDirectory);
 
             AtomicParsleyCommand = new ConsoleClient(AtomicParsley);
             FfmpegCommand = new ConsoleClient(Ffmpeg);

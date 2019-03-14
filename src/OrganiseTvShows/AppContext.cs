@@ -47,6 +47,7 @@ namespace WtvConverter
             Ffmpeg = Environment.ExpandEnvironmentVariables(Ffmpeg);
             Ffprobe = Environment.ExpandEnvironmentVariables(Ffprobe);
             InputDirectory = Environment.ExpandEnvironmentVariables(InputDirectory);
+            OutputDirectory = Environment.ExpandEnvironmentVariables(OutputDirectory);
             ShowNameMapFile = Environment.ExpandEnvironmentVariables(ShowNameMapFile);
 
             FfmpegCommand = new ConsoleClient(Ffmpeg);

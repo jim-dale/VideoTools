@@ -53,29 +53,30 @@ namespace WtvConverter
                 .FixTitleAndShowName()
                 .SetSafeShowName().Log(_log, "Episode");
 
-            _outputFileName = _episode.GetConversionOutputFileName();
+            _outputFileName = _episode.GetOutputFileName();
             _log.Information("Output file name:\"{OutputFileName}\"", _outputFileName);
 
             var outputFile = GetOutputFile(".mp4");
             _log.Information("Output file:\"{OutputFile}\"", outputFile);
-
-            bool tempFileCreated = false;
 
             if (File.Exists(outputFile) == false)
             {
                 var tempFile = GetTemporaryFile();
                 _log.Information("Temporary file:\"{TempFile}\"", tempFile);
 
-                if (File.Exists(tempFile) == false)
+                bool tempFileCreated = false;
+                bool tempFileExists = File.Exists(tempFile);
+
+                if (tempFileExists == false)
                 {
-                    tempFileCreated = _appContext.WhatIf;
+                    tempFileCreated = tempFileExists = _appContext.WhatIf;
 
                     if (_appContext.WhatIf == false)
                     {
                         _appContext.FfmpegCommand.ConvertWtvToMp4File(_inputVideoFile, tempFile);
                         _log.Information("ConvertWtvToMp4File:{@ffmpeg}", _appContext.FfmpegCommand);
 
-                        tempFileCreated = _appContext.FfmpegCommand.ExitCode == 0 && File.Exists(tempFile);
+                        tempFileCreated = tempFileExists = _appContext.FfmpegCommand.ExitCode == 0 && File.Exists(tempFile);
                     }
                 }
                 else
@@ -83,7 +84,7 @@ namespace WtvConverter
                     _log.Information("Not converting input file because the converted file already exists");
                 }
 
-                if (tempFileCreated)
+                if (tempFileExists)
                 {
                     var thumbnailFile = GetOutputFile(".jpg");
                     if (TryCreateThumbnailFile(thumbnailFile))
@@ -115,51 +116,6 @@ namespace WtvConverter
             }
         }
 
-        private string GetTemporaryFile()
-        {
-            var fileName = _inputVideoFileName + ".mp4";
-            return Path.Combine(GetTempDirectory(), fileName);
-        }
-
-        private string GetOutputFile(string extension)
-        {
-            var fileName = _outputFileName + extension;
-            return Path.Combine(GetOutputDirectory(), fileName);
-        }
-
-        private string GetTempDirectory()
-        {
-            if (_tempDirectory is null)
-            {
-                var path = Environment.ExpandEnvironmentVariables(_appContext.TempDirectory);
-
-                if (Directory.Exists(path) == false)
-                {
-                    Directory.CreateDirectory(path);
-                }
-
-                _tempDirectory = path;
-            }
-            return _tempDirectory;
-        }
-
-        private string GetOutputDirectory()
-        {
-            if (_outputDirectory is null)
-            {
-                var path = Environment.ExpandEnvironmentVariables(_appContext.OutputDirectory)
-                    .FormatWith(_episode);
-
-                if (Directory.Exists(path) == false)
-                {
-                    Directory.CreateDirectory(path);
-                }
-
-                _outputDirectory = path;
-            }
-            return _outputDirectory;
-        }
-
         /// <summary>
         /// Writes a Kodi episode NFO file to the destination directory unless the output video file name is Kodi compatible
         /// </summary>
@@ -173,13 +129,12 @@ namespace WtvConverter
             {
                 _log.Information("Saving episode:{@Episode}", _episode);
 
-                var path = GetOutputFile(".nfo");
+                var episodeNfoFile = GetOutputFile(".nfo");
+                _log.Information("Saving episode NFO file to \"{EpisodeNfoPath}\"", episodeNfoFile);
 
                 if (_appContext.WhatIf == false)
                 {
-                    _log.Information("Saving episode NFO file to \"{EpisodeNfoPath}\"", path);
-
-                    _episode.SaveNfoFile(path);
+                    _episode.SaveNfoFile(episodeNfoFile);
                 }
             }
         }
@@ -193,8 +148,8 @@ namespace WtvConverter
             if (_appContext.WhatIf == false)
             {
                 _appContext.FfmpegCommand.ExtractThumbnailToFile(_inputVideoFile, path);
-
                 _log.Information("ExtractThumbnailToFile:{@ffmpeg}", _appContext.FfmpegCommand);
+
                 result = _appContext.FfmpegCommand.ExitCode == 0 && File.Exists(path);
             }
 
@@ -224,6 +179,56 @@ namespace WtvConverter
             }
 
             return _metadata;
+        }
+
+        private string GetTemporaryFile()
+        {
+            var fileName = _inputVideoFileName + ".mp4";
+
+            return Path.Combine(GetTempDirectory(), fileName);
+        }
+
+        private string GetTempDirectory()
+        {
+            if (_tempDirectory is null)
+            {
+                _tempDirectory = _appContext.TempDirectory;
+
+                if (_appContext.WhatIf == false)
+                {
+                    if (Directory.Exists(_tempDirectory) == false)
+                    {
+                        Directory.CreateDirectory(_tempDirectory);
+                    }
+                }
+            }
+
+            return _tempDirectory;
+        }
+
+        private string GetOutputFile(string extension)
+        {
+            var fileName = _outputFileName + extension;
+
+            return Path.Combine(GetOutputDirectory(), fileName);
+        }
+
+        private string GetOutputDirectory()
+        {
+            if (_outputDirectory is null)
+            {
+                _outputDirectory = _appContext.OutputDirectory.FormatWith(_episode);
+
+                if (_appContext.WhatIf == false)
+                {
+                    if (Directory.Exists(_outputDirectory) == false)
+                    {
+                        Directory.CreateDirectory(_outputDirectory);
+                    }
+                }
+            }
+
+            return _outputDirectory;
         }
 
         public void Dispose()

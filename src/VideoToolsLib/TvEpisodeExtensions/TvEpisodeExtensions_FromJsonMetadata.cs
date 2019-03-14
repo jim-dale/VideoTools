@@ -22,6 +22,7 @@ namespace VideoTools
             if (json.TryGetValue<string>("format.tags.title", out string title))
             {
                 result.Title = title;
+                result.ShowName = title;
             }
             if (json.TryGetValue<string>("format.tags.show", out string show))
             {

@@ -14,17 +14,6 @@ namespace VideoTools
             if (String.IsNullOrEmpty(result.Title))
             {
                 result.Title = result.ShowName;
-
-                if (result.AiredTime != DateTime.MinValue)
-                {
-                    string aired = result.AiredTime.ToString("yyyy-MM-dd HH:mm");
-                    result.Title = $"{result.ShowName} {aired}";
-                }
-            }
-            if (string.IsNullOrEmpty(result.ShowName) == false)
-            {
-                result.ShowName = result.ShowName.RemoveOptionalPrefix(Prefix).Trim();
-                result.ShowName = result.ShowName.RemoveOptionalPrefix(Replacement).Trim();
             }
             if (String.IsNullOrEmpty(result.Title) == false)
             {
@@ -33,6 +22,17 @@ namespace VideoTools
                     result.Title = Replacement + result.Title.Substring(Prefix.Length);
                 }
             }
+            if (string.IsNullOrEmpty(result.ShowName) == false)
+            {
+                result.ShowName = result.ShowName.RemoveOptionalPrefix(Prefix).Trim();
+                result.ShowName = result.ShowName.RemoveOptionalPrefix(Replacement).Trim();
+            }
+            if (result.AiredTime != DateTime.MinValue)
+            {
+                string aired = result.AiredTime.ToString("yyyy-MM-dd HH:mm");
+                result.Title = $"{result.Title} {aired}";
+            }
+
             return result;
         }
 
@@ -46,30 +46,6 @@ namespace VideoTools
         public static TvEpisode FromDescription(this TvEpisode result)
         {
             result.TrySetSeriesAndEpisodeNumbers(result.Description);
-
-            //if (String.IsNullOrWhiteSpace(result.Channel) == false)
-            //{
-            //    if (result.Channel.StartsWith("More 4", StringComparison.CurrentCultureIgnoreCase)
-            //        || result.Channel.StartsWith("E4", StringComparison.CurrentCultureIgnoreCase))
-            //    {
-            //        //string summary = episode.Description.RemoveOptionalPrefix("Brand new series - ");
-            //        //episode.TrySetEpisodeName(summary);
-
-            //        result.TrySetSeriesAndEpisodeNumbers(result.Description);
-            //    }
-            //    if (result.Channel.StartsWith("ITV", StringComparison.CurrentCultureIgnoreCase))
-            //    {
-            //        //episode.TrySetEpisodeName(episode.Summary);
-
-            //        result.TrySetSeriesAndEpisodeNumbers(result.Description);
-            //    }
-            //    if (result.Channel.StartsWith("BBC", StringComparison.CurrentCultureIgnoreCase))
-            //    {
-            //        //var summary = Helpers.TryRemoveEpisodeNumberBBC(episode.Summary).Trim();
-            //        //episode.TrySetEpisodeName(summary);
-            //        //episode.TrySetEpisodeNumber(episode.Summary);
-            //    }
-            //}
 
             return result;
         }

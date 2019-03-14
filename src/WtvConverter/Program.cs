@@ -23,7 +23,7 @@ namespace WtvConverter
                     .SetFromConfiguration(ConfigurationManager.AppSettings)
                     .Initialise();
 
-                Log.Information("{@AppContext}", appContext);
+                Log.Information("AppContext:{@AppContext}", appContext);
 
                 ProcessInputDirectory(appContext);
             }

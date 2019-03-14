@@ -7,7 +7,7 @@ namespace VideoTools
 
     public static partial class TvEpisodeExtensions
     {
-        public static string GetConversionOutputFileName(this TvEpisode item)
+        public static string GetOutputFileName(this TvEpisode item)
         {
             var result = item.SafeShowName;
 

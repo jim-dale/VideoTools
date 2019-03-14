@@ -12,7 +12,7 @@ namespace WtvConverter
             int result = 0;
 
             Log.Logger = new LoggerConfiguration()
-                .WriteTo.RollingFile("logs\\{Date}-wtvconverter.log")
+                .WriteTo.RollingFile("logs\\{Date}-organisetvshows.log")
                 .WriteTo.Console()
                 .CreateLogger();
 
@@ -23,7 +23,7 @@ namespace WtvConverter
                     .SetFromConfiguration(ConfigurationManager.AppSettings)
                     .Initialise();
 
-                Log.Information("{@AppContext}", appContext);
+                Log.Information("AppContext:{@AppContext}", appContext);
 
                 ProcessInputDirectory(appContext);
             }
@@ -53,7 +53,7 @@ namespace WtvConverter
             {
                 try
                 {
-                    using (Log.Logger.BeginTimedOperation("Processing file", file))
+                    using (Log.Logger.BeginTimedOperation("Process file", file))
                     {
                         var fileContext = new FileContext(appContext, file);
 
