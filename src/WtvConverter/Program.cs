@@ -12,7 +12,7 @@ namespace WtvConverter
             int result = 0;
 
             Log.Logger = new LoggerConfiguration()
-                .WriteTo.RollingFile("logs\\{Date}-wtvconverter.log")
+                .WriteTo.File("logs\\wtvconverter-.log")
                 .WriteTo.Console()
                 .CreateLogger();
 
