@@ -1,5 +1,5 @@
 ﻿
-namespace WtvConverter
+namespace OrganiseTvShows
 {
     using Serilog;
     using VideoTools;

@@ -1,13 +1,12 @@
-﻿
-namespace WtvConverter
-{
-    using System;
-    using System.Collections.Generic;
-    using System.IO;
-    using Serilog;
-    using Serilog.Core;
-    using VideoTools;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using Serilog;
+using Serilog.Core;
+using VideoTools;
 
+namespace OrganiseTvShows
+{
     internal class FileContext : IDisposable
     {
         private readonly AppContext _appContext;

@@ -3,7 +3,7 @@ using System.Configuration;
 using Microsoft.Extensions.FileSystemGlobbing;
 using Serilog;
 
-namespace WtvConverter
+namespace OrganiseTvShows
 {
     internal class Program
     {

@@ -1,5 +1,5 @@
 ﻿
-namespace WtvConverter
+namespace OrganiseTvShows
 {
     using System;
     using System.Collections.Specialized;
