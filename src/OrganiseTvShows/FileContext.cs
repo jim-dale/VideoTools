@@ -64,8 +64,14 @@ namespace OrganiseTvShows
 
                 if (_appContext.WhatIf == false)
                 {
-                    File.Copy(_inputVideoFile, outputFile);
-
+                    if (_appContext.CreateSymbolicLink)
+                    {
+                        NativeHelpers.CreateSymbolicFileLink(_inputVideoFile, outputFile);
+                    }
+                    else
+                    {
+                        File.Copy(_inputVideoFile, outputFile);
+                    }
                     _log.Information("Finished copying input file \"{Input}\" to \"{Output}\"", _inputVideoFile, outputFile);
                 }
 

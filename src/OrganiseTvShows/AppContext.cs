@@ -13,6 +13,7 @@ namespace OrganiseTvShows
         public string OutputDirectory { get; set; }
         public string SearchPatterns { get; set; }
         public string ShowNameMapFile { get; set; }
+        public bool CreateSymbolicLink { get; set; }
         public bool WhatIf { get; set; }
 
         public ConsoleClient FfmpegCommand { get; private set; }
@@ -36,6 +37,7 @@ namespace OrganiseTvShows
             OutputDirectory = settings.GetAs(OutputDirectory, nameof(OutputDirectory));
             SearchPatterns = settings.GetAs(SearchPatterns, nameof(SearchPatterns));
             ShowNameMapFile = settings.GetAs(ShowNameMapFile, nameof(ShowNameMapFile));
+            CreateSymbolicLink = settings.GetAs(CreateSymbolicLink, nameof(CreateSymbolicLink));
 
             WhatIf = settings.GetAs(WhatIf, nameof(WhatIf));
 
