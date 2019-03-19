@@ -15,6 +15,10 @@ namespace VideoTools
             {
                 result.Title = result.ShowName;
             }
+            if (String.IsNullOrEmpty(result.OriginalTitle))
+            {
+                result.OriginalTitle = result.ShowName;
+            }
             if (String.IsNullOrEmpty(result.Title) == false)
             {
                 if (result.Title.StartsWith(Prefix, StringComparison.CurrentCultureIgnoreCase))
@@ -26,6 +30,9 @@ namespace VideoTools
             {
                 result.ShowName = result.ShowName.RemoveOptionalPrefix(Prefix).Trim();
                 result.ShowName = result.ShowName.RemoveOptionalPrefix(Replacement).Trim();
+
+                result.ShowName = result.ShowName.RemoveOptionalPostfix("...").Trim();
+                result.ShowName = result.ShowName.TrimEnd(':').Trim();
             }
             if (result.AiredTime != DateTime.MinValue)
             {

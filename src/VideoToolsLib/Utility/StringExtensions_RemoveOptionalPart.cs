@@ -16,5 +16,17 @@ namespace VideoTools
             }
             return s;
         }
+
+        public static string RemoveOptionalPostfix(this string s, string postfix)
+        {
+            if (String.IsNullOrEmpty(s) == false)
+            {
+                if (s.EndsWith(postfix, StringComparison.CurrentCultureIgnoreCase))
+                {
+                    s = s.Remove(s.Length - postfix.Length);
+                }
+            }
+            return s;
+        }
     }
 }

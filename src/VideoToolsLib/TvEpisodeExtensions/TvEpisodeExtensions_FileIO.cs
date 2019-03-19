@@ -43,6 +43,7 @@ namespace VideoTools
             {
                 episode.Add(new XElement("showtitle", item.ShowName));
             }
+            episode.Add(new XElement("originaltitle", item.OriginalTitle));
             episode.Add(new XElement("title", item.Title));
             if (String.IsNullOrWhiteSpace(item.Description) == false)
             {

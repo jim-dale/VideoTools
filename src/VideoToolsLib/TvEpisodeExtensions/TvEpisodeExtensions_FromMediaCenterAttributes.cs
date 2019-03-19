@@ -15,6 +15,7 @@ namespace VideoTools
             }
             if (attributes.TryGetValueAs<string>(StreamBufferRecording.Subtitle, out string subtitle))
             {
+                result.OriginalTitle = subtitle;
                 result.Title = subtitle;
             }
             if (attributes.TryGetValueAs<string>(StreamBufferRecording.SubtitleDescription, out string description))
