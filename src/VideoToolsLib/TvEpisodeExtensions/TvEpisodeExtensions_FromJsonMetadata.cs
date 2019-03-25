@@ -35,7 +35,7 @@ namespace VideoTools
             }
             if (String.IsNullOrWhiteSpace(description) == false)
             {
-                result.Description = description;
+                result.Description = description.FixBBCEncoding();
             }
             if (json.TryGetValue<double>("format.duration", out double duration))
             {
