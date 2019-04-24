@@ -9,16 +9,23 @@ namespace VideoTools
     {
         public static TvEpisode MapShowName(this TvEpisode result, ShowNameMapEntry[] map)
         {
-            if (map != null && map.Any() && String.IsNullOrWhiteSpace(result.ShowName) == false)
-            {
-                var name = result.ShowName;
+            var name = result.ShowName;
 
+            if (map != null && map.Any() && String.IsNullOrWhiteSpace(name) == false)
+            {
                 foreach (var correction in map)
                 {
-                    var match = Regex.Match(name, correction.Regex);
+                    var match = Regex.Match(name, correction.Regex, RegexOptions.IgnoreCase);
                     if (match.Success)
                     {
-                        result.ShowName = correction.Name;
+                        if (String.IsNullOrWhiteSpace(correction.Name) == false)
+                        {
+                            result.ShowName = correction.Name;
+                        }
+                        if (String.IsNullOrWhiteSpace(correction.KodiUrl) == false)
+                        {
+                            result.KodiUrl = correction.KodiUrl;
+                        }
                         break;
                     }
                 }

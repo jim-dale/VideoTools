@@ -99,6 +99,11 @@ namespace VideoTools
                 );
 
             xml.Save(path);
+
+            if (String.IsNullOrWhiteSpace(item.KodiUrl) == false)
+            {
+                File.AppendAllText(path, Environment.NewLine + item.KodiUrl);
+            }
         }
     }
 }

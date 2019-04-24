@@ -19,6 +19,7 @@ namespace VideoTools
         public DateTime AiredTime { get; set; }             // <aired></aired>                  WM/WMRVEncodeTime                           year (UTC)
         public DateTime OriginalAirDate { get; set; }       // <premiered></premiered>          WM/MediaOriginalBroadcastDateTime
         public string ThumbnailFile { get; set; }           // <thumb></thumb>
+        public string KodiUrl { get; set; }
 
         public override string ToString()
         {

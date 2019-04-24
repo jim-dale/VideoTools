@@ -11,7 +11,7 @@ namespace VideoTools
         {
             var result = Array.Empty<ShowNameMapEntry>();
 
-            if ((optional == false) || File.Exists(path))
+            if (optional == false || File.Exists(path))
             {
                 var json = File.ReadAllText(path);
 
